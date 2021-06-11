@@ -1,36 +1,133 @@
 <html>
 <head>
-    <meta charset='utf-8'>
-    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <title>GeoAR.js demo</title>
-    <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
-    <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+    <title>Leaflet Realtime - Earthquakes</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.1.0/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.0.6/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.0.6/dist/MarkerCluster.Default.css" />
+    <style>
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+        }
+    </style>
 </head>
+<body>
+    <div id="map"></div>
 
-<body style='margin: 0; overflow: hidden;'>
+    <script src="https://unpkg.com/leaflet@1.1.0/dist/leaflet-src.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.0.6/dist/leaflet.markercluster-src.js"></script>
+    <script src="https://unpkg.com/leaflet.featuregroup.subgroup"></script>
     
-<a-scene 
-     embedded
-     loading-screen="enabled: false;"
-      arjs="sourceType: webcam; debugUIEnabled: false;">
-        
-<a-image
-    src="image/gomimusi.png"
-    look-at="[gps-camera]"
-    scale="3 2 0"
-    gps-entity-place="latitude: 35.51535993575514; longitude: 134.21440565132426;">
-</a-image>
     
-<a-image
-    src="image/madara.png"
-    look-at="[gps-camera]"
-    scale="3 2 0"
-    gps-entity-place="latitude: 35.51512335178811; longitude: 134.21454023808192;">
-</a-image>
-            
-<a-camera gps-camera="maxDistance:50"  look-controls-enabled='false' arjs-look-controls='smoothingFactor: 0.1' gps-camera='gpsMinDistance: 5' rotation-reader></a-camera>
+    <script>
+var map = L.map('map').setView([48.517, 18.255], 5);
 
-</a-scene>
+L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
+
+var shipLayer = L.layerGroup();
+var ships = L.icon({
+  iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Emoji_u1f6a2.svg/30px-Emoji_u1f6a2.svg.png',
+  iconSize: [30, 30]
+});
+
+var realtime = L.realtime(
+  /*
+  I'm providing a function to simulate a GeoJSON service,
+  instead of an URL
+  
+  {
+  url: 'jsonServlet/ships.json',
+  crossOrigin: true,
+  type: 'json' 
+  }*/
+  function(success, error) {
+    var ship = mockShip();
+    success(ship);
+  }, {
+    interval: 5 * 1000,
+    getFeatureId: function(featureData) {
+      return featureData.properties.mmsi;
+    },
+    pointToLayer: function(feature, latlng) {
+      marker = L.marker(latlng, {
+        icon: ships
+      });
+      marker.bindPopup('mmsi: ' + feature.properties.mmsi +
+        '<br/> course:' + feature.properties.hdg +
+        '<br/> speed:' + feature.properties.sog);
+      marker.addTo(shipLayer);
+      return marker;
+    }
+
+  }).addTo(map);
+//controlLayers.addOverlay(geojson, 'Ships');
+
+realtime.on('update', function() {
+  map.fitBounds(realtime.getBounds(), {
+    maxZoom: 5
+  });
+});
+
+function mockShip() {
+  return {
+    "type": "FeatureCollection",
+    "crs": {
+      "type": "name",
+      "properties": {
+        "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+      }
+    },
+    "features": [{
+        "geometry": {
+          "coordinates": [
+            48.517 + Math.sin((new Date).getTime()) * 2,
+            18.255
+          ],
+          "type": "Point"
+        },
+        "type": "Feature",
+        "properties": {
+          "geometry/coordinates/longitude": "48.517708",
+          "geometry/type": "Point",
+          "mmsi": "512131345",
+          "geometry/coordinates/latitude": "18.255447",
+          "hdg": "108",
+          "cog": "108",
+          "sog": "30.0",
+          "type": "Feature"
+        }
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            48.415,
+            18.151 + Math.sin((new Date).getTime()) * 2
+          ],
+          "type": "Point"
+        },
+        "type": "Feature",
+        "properties": {
+          "geometry/coordinates/longitude": "48.417708",
+          "geometry/type": "Point",
+          "mmsi": "612131346",
+          "geometry/coordinates/latitude": "18.155447",
+          "hdg": "108",
+          "cog": "108",
+          "sog": "30.0",
+          "type": "Feature"
+        }
+      }
+    ]
+  };
+}
+
+    
+    
+    </script>
 </body>
 </html>
