@@ -13,10 +13,15 @@
 
 <body>
 
-<br> 
-<button type="button" align="center;" style="width: 90%; padding: 20px;" onclick="location.reload();">現在地を確認（リロード）</button> 
 <br>
-    <div id="map" width="300px"></div>
+
+<div align="center;">
+<button type="button"style="width: 90%; padding: 20px;" onclick="location.reload();">現在地を確認（リロード）</button> 
+</div>
+
+<br>
+
+<div id="map" width="300px"></div>
 
 <script>
 var t_std = new L.tileLayer('http://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
