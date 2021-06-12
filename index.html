@@ -13,7 +13,7 @@
 
 <body>
 
-<p><button onClick="currentPos()">現在地に移動</button></p>
+<p><button onClick="onLocationFound()">現在地に移動</button></p>
 
     <div id="map"></div>
 
@@ -43,8 +43,6 @@ var mapMarker;
 var comment;
 
 map.locate({setView: true, maxZoom: 14});
-
-function currentPos(){
     
 function onLocationFound(e) {
 'use strict';
@@ -56,7 +54,6 @@ mapMarker.bindPopup(comment).openPopup();
 function onLocationError(e) {
 'use strict';
 window.alert('位置情報取得に失敗しました。');
-}
 }
 
 map.on('locationfound', onLocationFound);
