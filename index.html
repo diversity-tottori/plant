@@ -1,133 +1,89 @@
+<!DOCTYPE html>
 <html>
 <head>
-    <title>Leaflet Realtime - Earthquakes</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.1.0/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.0.6/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.0.6/dist/MarkerCluster.Default.css" />
-    <style>
-        #map {
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Step1.Leafletで地理院地図を表示する最も基本的なコード|Lefletの基本|埼玉大学谷謙二研究室</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.0/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.3.0/dist/leaflet.js"></script>
 </head>
+
 <body>
-    <div id="map"></div>
-
-    <script src="https://unpkg.com/leaflet@1.1.0/dist/leaflet-src.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.0.6/dist/leaflet.markercluster-src.js"></script>
-    <script src="https://unpkg.com/leaflet.featuregroup.subgroup"></script>
     
     
-    <script>
-var map = L.map('map').setView([48.517, 18.255], 5);
+<!-- 現在位置に移動するボタン -->
+<p><button onClick="currentPos()">現在地に移動</button></p>
+ 
+<div id="mapid" style="width: 100%; height: 400px;"></div>
 
-L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(map);
-
-var shipLayer = L.layerGroup();
-var ships = L.icon({
-  iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Emoji_u1f6a2.svg/30px-Emoji_u1f6a2.svg.png',
-  iconSize: [30, 30]
-});
-
-var realtime = L.realtime(
-  /*
-  I'm providing a function to simulate a GeoJSON service,
-  instead of an URL
-  
-  {
-  url: 'jsonServlet/ships.json',
-  crossOrigin: true,
-  type: 'json' 
-  }*/
-  function(success, error) {
-    var ship = mockShip();
-    success(ship);
-  }, {
-    interval: 5 * 1000,
-    getFeatureId: function(featureData) {
-      return featureData.properties.mmsi;
-    },
-    pointToLayer: function(feature, latlng) {
-      marker = L.marker(latlng, {
-        icon: ships
-      });
-      marker.bindPopup('mmsi: ' + feature.properties.mmsi +
-        '<br/> course:' + feature.properties.hdg +
-        '<br/> speed:' + feature.properties.sog);
-      marker.addTo(shipLayer);
-      return marker;
+<script>
+ 
+<code javascript>
+  function currentPos(){
+ 
+    //APIに対応していないブラウザを排除
+    if (navigator.geolocation === false) {
+      alert("位置情報を取得できません。ブラウザが対応していません。");
     }
-
-  }).addTo(map);
-//controlLayers.addOverlay(geojson, 'Ships');
-
-realtime.on('update', function() {
-  map.fitBounds(realtime.getBounds(), {
-    maxZoom: 5
+ 
+    //位置情報取得オプションを設定(後述)
+    var options = {
+      enableHighAccuracy: false,
+      timeout: 5000,
+      maximumAge: 0
+    };
+ 
+    //取得成功時の動作設定
+    function success(pos) {
+        var lat=pos.coords.latitude; //緯度
+        var lon=pos.coords.longitude; //経度
+        mymap.setView([ lat,lon ]); //地図を移動
+    }
+ 
+    //取得失敗時(タイムアウトなど)の動作設定
+    function error(err) {
+      alert("位置情報を取得できませんでした。デバイスに位置情報を取得できる装置が無い、または取得に時間がかかっている、またはデバイスやブラウザ設定でブロックされています");
+    }
+ 
+    //コマンドを実行
+    navigator.geolocation.getCurrentPosition(success, error, options);
+  }
+ 
+  function cssLoad(cssFile){
+    if(document.all){
+      document.createStyleSheet(cssFile);
+    }else{
+      var link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = cssFile;
+      link.type = "text/css"
+      document.getElementsByTagName('head')[0].appendChild(link);
+    }
+  }
+  cssLoad("https://unpkg.com/leaflet@1.3.0/dist/leaflet.css");
+  function addOnload(evtFunc){
+    if(window.addEventListener) {
+      window.addEventListener('load', evtFunc, false);
+    } else if(window.attachEvent){ //IE用
+      window.attachEvent('onload', evtFunc);
+    } else {
+      //alert('window.onload エラー');
+    }
+  }  
+  var mymap;
+  addOnload(function(){
+    mymap = L.map('mapid');
+      L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors, '
+    }).addTo(mymap);
+    L.control.scale({imperial:false}).addTo(mymap);
+    mymap.setView([35.6896, 139.6918], 8);
   });
-});
+</script>
 
-function mockShip() {
-  return {
-    "type": "FeatureCollection",
-    "crs": {
-      "type": "name",
-      "properties": {
-        "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
-      }
-    },
-    "features": [{
-        "geometry": {
-          "coordinates": [
-            48.517 + Math.sin((new Date).getTime()) * 2,
-            18.255
-          ],
-          "type": "Point"
-        },
-        "type": "Feature",
-        "properties": {
-          "geometry/coordinates/longitude": "48.517708",
-          "geometry/type": "Point",
-          "mmsi": "512131345",
-          "geometry/coordinates/latitude": "18.255447",
-          "hdg": "108",
-          "cog": "108",
-          "sog": "30.0",
-          "type": "Feature"
-        }
-      },
-      {
-        "geometry": {
-          "coordinates": [
-            48.415,
-            18.151 + Math.sin((new Date).getTime()) * 2
-          ],
-          "type": "Point"
-        },
-        "type": "Feature",
-        "properties": {
-          "geometry/coordinates/longitude": "48.417708",
-          "geometry/type": "Point",
-          "mmsi": "612131346",
-          "geometry/coordinates/latitude": "18.155447",
-          "hdg": "108",
-          "cog": "108",
-          "sog": "30.0",
-          "type": "Feature"
-        }
-      }
-    ]
-  };
-}
-
-    
-    
-    </script>
 </body>
 </html>
+    
+<!--
+https://www.achiachi.net/blog/leaflet/geolocation#%E3%82%BD%E3%83%BC%E3%82%B9%E3%82%B3%E3%83%BC%E3%83%89
+-->
