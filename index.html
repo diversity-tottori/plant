@@ -44,8 +44,6 @@ var comment;
 
 map.locate({setView: true, maxZoom: 14});
     
-function currentPos(){
-    
 function onLocationFound(e) {
 'use strict';
 mapMarker = L.marker(e.latlng).addTo(map);
@@ -60,8 +58,6 @@ window.alert('位置情報取得に失敗しました。');
 
 map.on('locationfound', onLocationFound);
 map.on('locationerror', onLocationError);
-    
-}
 
 var Map_BaseLayer = {
 "地理院地図 標準": t_std,
